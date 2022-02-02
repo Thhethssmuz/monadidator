@@ -1,0 +1,29 @@
+{
+  "author": "Svein Inge Albrigtsen <thhethssmuz@gmail.com>",
+  "name": "monadidator",
+  "version": "0.0.0",
+  "description": "Because validation can be expressed as a monad.",
+  "main": "lib/index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "precoverage": "c8 --reporter=lcov awfltst --summary --filename test/*.js test/types/*.js",
+    "coverage": "cat coverage/lcov.info",
+    "docs": "jsdoc2md --partial templates/partials/*.hbs -t templates/main.hbs -d 2 -p list -r list -f lib/index.js lib/types/*.js > README.md",
+    "test": "awfltst --summary --filename test/*.js test/types/*.js",
+    "lint": "eslint lib/ test/",
+    "format": "prettier --no-bracket-spacing --single-quote -w lib/ test/"
+  },
+  "devDependencies": {
+    "awfltst": "^0.6.0",
+    "c8": "^7.8.0",
+    "jsdoc-to-markdown": "^7.0.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Thhethssmuz/monadidator.git"
+  },
+  "license": "MIT"
+}

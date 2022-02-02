@@ -1,0 +1,5 @@
+{{~#if html~}}
+{{#unless (equal defaultvalue undefined)}}<code>{{#if equals}} = {{/if}}{{#if (equal type.names.[0] "string")}}{{json-stringify defaultvalue}}{{else}}{{defaultvalue}}{{/if}}</code>{{/unless}}
+{{else~}}
+{{#unless (equal defaultvalue undefined)}}`{{#if equals}} = {{/if}}{{#if (equal type.names.[0] "string")}}{{json-stringify defaultvalue}}{{else}}{{defaultvalue}}{{/if}}`{{/unless}}
+{{~/if~}}

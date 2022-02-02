@@ -1,0 +1,157 @@
+# Monadidator
+
+Because validation can be expressed as a monad.
+
+...but more likely because you want to have a validator that also allows you to modify the input as you are validating it.
+
+# Usage
+
+```javascript
+const {is} = require('monadidator');
+
+const pointValidator = is.object({
+  x: is.number().finite(),
+  y: is.number().finite(),
+}).or(is.array([
+  is.number().finite(),
+  is.number().finite(),
+]).map(([x, y]) => ({x, y})));
+
+const lengthBetweenPoints = function (point1, point2) {
+  const {x: x1, y: y2} = pointValidator.run(point1, 'point1');
+  const {x: x2, y: y2} = pointValidator.run(point2, 'point2');
+  return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+};
+```
+
+## Docs
+
+The validator API may be summed up as follows:
+
+```
+is.<type>(...)
+is.<type>(...).<restriction>(...)
+is.<type>(...).where(<sub-property>, validator)
+is.<type>(...).where.<frequency>.<entry-type>(validator)
+is.<type>(...).not.<restriction>(...)
+is.<type>(...).not.where(<sub-property>, validator)
+is.<type>(...).not.where.<frequency>.<entry-type>(validator)
+```
+
+### Types
+
+A `<type>` validator is a primitive validator that validates that a value is of a given type, typically through using the JavaScript `typeof` or `instanceof` operators. All types are static functions that return an instance of a validator class specific to the type.
+
+### Restrictions
+
+Restrictions are validators that allow one to restrict the range of valid inputs to a subset of the base type. Restrictions are type specific, i.e. which restrictions are available depends on the base type. Every restriction is a method on the class instance returned by the base type, and returns a new modified instance of the same class so that you may chain multiple restrictions together, e.g.:
+
+```js
+const v = is.number().finite().greaterThan(0);
+// v.run(NaN); // throws
+// v.run(0);   // throws
+v.run(1);      // ok
+```
+
+Restrictions may also be negated using the `not` property. This property is a special `Proxy` object that has all the same restrictions as the base type, but where every validator is negated, e.g.:
+
+```js
+const v = is.number().finite().not.greaterThan(0);
+// v.run(NaN); // throws
+// v.run(1);   // throws
+v.run(0);      // ok
+```
+
+Note that the `not` property only negates the next validator in the chain, i.e. the validator to its immediate right. The not property will also negate itself. Note that the `not` property is not a function, but rather an object. And perhaps confusingly, there also exist a `not` method that functions as a single restriction. So for maximum silliness, behold this monstrosity:
+
+```js
+const v = is.number().not.not.not(is.number().not.finite());
+// v.run(NaN); // throws
+v.run(1);      // ok
+```
+
+### Map
+
+The `map` method allow one to perform transformations on the value being validated. It functions similarly to the `map` method on arrays, but instead of applying the transformation function on each element in the array, it applies the function to the value being validated, if the validator is successful.
+
+For example:
+
+```js
+const is.string().match(/^\d+$/).map(x => parseInt(x, 10));
+// v.run(1);     // throws
+// v.run('lol'); // throws
+v.run('123');    // ok => returns 123 (as a number)
+```
+
+### Where
+
+The `where` method allows one to specify a validator for a given sub-property of a value. The given validator will then be run against the values sub-property. E.g.:
+
+```js
+const v = is.string().where('length', is.number().greaterThan(1));
+// v.run(''); // throws
+v.run('lol'); // ok
+```
+
+Note that if you apply a transformation to the sub-property using the `map` method, then the `where` method will return a new object with the modified property. However, if the property is non-configurable then this is not valid and will instead throw an error. Furthermore, if the property is an object, this may subtly change the value, as the new value will be created using a plain object, i.e.: `{...originalValue, [property]: resultOfWhere}`. Notably the object will loose its prototype, and any non-enumerable properties will be lost.
+
+```js
+const v = is.string().where('length', is.number().map(x => x + 1));
+// v.run(null); // throws, expects a string
+// v.run('');   // throws, cannot assign to read only property 'length'
+```
+
+```js
+const v = is.object().where('x', is.number().map(x => x + 1));
+// v.run(null);      // throws, expects an object
+// v.run({});        // expects, input.x to be a number
+v.run({x: 1});       // ok, returns {x: 2}
+v.run({x: 1, y: 2}); // ok, returns {x: 2, y: 2}
+```
+
+```js
+class SomeClass {}
+const someInstance = new SomeClass();
+someInstance.x = 1;
+
+const v = is.object().where('x', is.number().map(x => x + 1));
+v.run(someInstance); // ok, but returns {x: 2} (not instance of SomeClass)
+```
+
+### Where iterators
+
+There also exist some sub methods under `where`, i.e.: the `where.<frequency>.<entry-type>` pattern. These methods, however, are type specific and are only available for objects and arrays, and subclasses thereof. These methods function much like the `where` method itself, but instead of declaring a validator for a single sub-property it declares a validator for a collection of sub-properties. E.g.:
+
+```js
+const v = is.array().where.every.element(is.number());
+v.run([1, 2, 3]);           // ok
+// v.run([1, 2, 3, 'lol']); // throws
+```
+
+Note that if the inner validator uses `map` then these methods will return new objects similar to the `where` method itself. But for each `<entry-type>` only the properties of the given type will be preserved.
+
+| `<entry-type>`     |  **Properties**             |
+|:-------------------|:----------------------------|
+| `key`              | enumerable + symbol         |
+| `value`            | enumerable + symbol         |
+| `enumerable.key`   | enumerable                  |
+| `enumerable.value` | enumerable                  |
+| `enum`             | _alias for `enumerable`_    |
+| `symbol.key`       | symbols                     |
+| `symbol.value`     | symbols                     |
+| `element`          | _alias for `element.value`_ |
+| `element.key`      | Array elements              |
+| `element.value`    | Array elements              |
+| `elem`             | _alias for `element`_       |
+
+```js
+const v = is.object().where.every.enumerable.value(is.number());
+v.run({x: 1, y: 2, [Symbol('test')]: 3}) // ok, but returns {x: 1, y: 2} and
+                                         // the symbol property is neither
+                                         // validated nor returned.
+```
+
+# API
+
+{{#identifier name="is"}}{{>docs}}{{/identifier}}
+{{#identifiers kind="class"}}{{>docs}}{{/identifiers}}
