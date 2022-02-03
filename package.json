@@ -1,7 +1,7 @@
 {
   "author": "Svein Inge Albrigtsen <thhethssmuz@gmail.com>",
   "name": "monadidator",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Because validation can be expressed as a monad.",
   "main": "lib/index.js",
   "directories": {
