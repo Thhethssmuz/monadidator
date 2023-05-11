@@ -172,6 +172,7 @@ Main object containing all type validators.
     * [.object([tmpl])](#is.object) ⇒ [`ObjectValidator`](#ObjectValidator)
     * [.string()](#is.string) ⇒ [`StringValidator`](#StringValidator)
     * [.undefined()](#is.undefined) ⇒ [`UndefinedValidator`](#UndefinedValidator)
+    * [.url([baseUrl])](#is.url) ⇒ [`UrlValidator`](#UrlValidator)
 
 <a name="is.{any,anything}"></a>
 
@@ -290,6 +291,19 @@ A function that returns a new validator that succeeds if the given input is
 undefined, and fails otherwise, i.e. if the input satisfies the condition
 `typeof input === 'undefined'`.
 
+
+<a name="is.url"></a>
+
+### is.url([baseUrl]) ⇒ [`UrlValidator`](#UrlValidator)
+
+A function that returns a new validator that succeeds if the given input is
+a URL, and fails otherwise, i.e. if the input satisfies the condition
+`input instanceof URL`. Alternatively it may be a string that is coercible to
+a URL trough `new URL`, although this is most useful when combined with the
+baseUrl parameter.
+
+
+- `[baseUrl]` (string | URL)
 
 
 <a name="Monadidator"></a>
@@ -1319,6 +1333,12 @@ satisfies the condition `xs.includes(input)`.
 <a name="UndefinedValidator"></a>
 
 ## UndefinedValidator ⇐ [`Monadidator`](#Monadidator)
+
+**Extends**: [`Monadidator`](#Monadidator)  
+
+<a name="UrlValidator"></a>
+
+## UrlValidator ⇐ [`Monadidator`](#Monadidator)
 
 **Extends**: [`Monadidator`](#Monadidator)  
 
