@@ -174,6 +174,7 @@ test('object', async function () {
 
     this.eq(v.run({x: {y: 0}}), {x: {y: 0}});
     this.eq(v.run({x: {y: 1}}), {x: {y: 1}});
+    this.eq(v.run({x: {y: 1, z: 2}}), {x: {y: 1}});
 
     await this.throws(
       () => v.run(null),
@@ -217,13 +218,54 @@ test('object', async function () {
     );
   });
 
-  test('template with map', async function () {
+  test('template with map 1', async function () {
     const v = is.object({
       x: is
         .string()
         .match(/^\d+$/)
         .map((x) => Number.parseInt(x, 10)),
     });
+
+    const sym = Symbol('test');
+    this.eq(v.run({x: '0'}), {x: 0});
+    this.eq(v.run({x: '1'}), {x: 1});
+    this.eq(v.run({x: '1', y: 2, [sym]: 3}), {x: 1});
+
+    await this.throws(
+      () => v.run(null),
+      async function (err) {
+        this.eq(err.property, 'input');
+        this.eq(err.actual, null);
+        this.eq(err.expected, 'an object');
+      }
+    );
+    await this.throws(
+      () => v.run({}),
+      async function (err) {
+        this.eq(err.property, 'input.x');
+        this.eq(err.actual, undefined);
+        this.eq(err.expected, 'a string');
+      }
+    );
+    await this.throws(
+      () => v.run({x: 'lol'}),
+      async function (err) {
+        this.eq(err.property, 'input.x');
+        this.eq(err.actual, 'lol');
+        this.eq(err.expected, 'a string matching /^\\d+$/');
+      }
+    );
+  });
+
+  test('template with map 2', async function () {
+    const v = is
+      .object({
+        x: is
+          .string()
+          .match(/^\d+$/)
+          .map((x) => Number.parseInt(x, 10)),
+      })
+      .satisfies(() => true);
 
     const sym = Symbol('test');
     this.eq(v.run({x: '0'}), {x: 0});

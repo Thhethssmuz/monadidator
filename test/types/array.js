@@ -175,6 +175,84 @@ test('array', async function () {
       }
     );
   });
+
+  test('template with map 1', async function () {
+    const v = is.array([
+      is
+        .string()
+        .match(/^\d+$/)
+        .map((x) => Number.parseInt(x, 10)),
+    ]);
+
+    this.eq(v.run(['0']), [0]);
+    this.eq(v.run(['1']), [1]);
+    this.eq(v.run(['0', '1']), [0]);
+
+    await this.throws(
+      () => v.run(null),
+      async function (err) {
+        this.eq(err.property, 'input');
+        this.eq(err.actual, null);
+        this.eq(err.expected, 'an array');
+      }
+    );
+    await this.throws(
+      () => v.run([]),
+      async function (err) {
+        this.eq(err.property, 'input[0]');
+        this.eq(err.actual, undefined);
+        this.eq(err.expected, 'a string');
+      }
+    );
+    await this.throws(
+      () => v.run(['lol']),
+      async function (err) {
+        this.eq(err.property, 'input[0]');
+        this.eq(err.actual, 'lol');
+        this.eq(err.expected, 'a string matching /^\\d+$/');
+      }
+    );
+  });
+
+  test('template with map 2', async function () {
+    const v = is
+      .array([
+        is
+          .string()
+          .match(/^\d+$/)
+          .map((x) => Number.parseInt(x, 10)),
+      ])
+      .satisfy(() => true);
+
+    this.eq(v.run(['0']), [0]);
+    this.eq(v.run(['1']), [1]);
+    this.eq(v.run(['0', '1']), [0]);
+
+    await this.throws(
+      () => v.run(null),
+      async function (err) {
+        this.eq(err.property, 'input');
+        this.eq(err.actual, null);
+        this.eq(err.expected, 'an array');
+      }
+    );
+    await this.throws(
+      () => v.run([]),
+      async function (err) {
+        this.eq(err.property, 'input[0]');
+        this.eq(err.actual, undefined);
+        this.eq(err.expected, 'a string');
+      }
+    );
+    await this.throws(
+      () => v.run(['lol']),
+      async function (err) {
+        this.eq(err.property, 'input[0]');
+        this.eq(err.actual, 'lol');
+        this.eq(err.expected, 'a string matching /^\\d+$/');
+      }
+    );
+  });
 });
 
 test('array.where', async function () {
@@ -394,6 +472,76 @@ test('array.where.every.element', async function () {
           err.expected,
           "a string\n    matching /^\\d+$/\n    map '3' -> 3\n    a number\n" +
             '    in [0, 1, 2]'
+        );
+      }
+    );
+  });
+
+  test('with map 2', async function () {
+    const v = is.array().where.every.element(
+      is
+        .number()
+        .in([0, 1, 2])
+        .or(
+          is
+            .string()
+            .match(/^\d+$/)
+            .map((x) => Number.parseInt(x, 10))
+            .then(is.number().in([0, 1, 2]))
+        )
+    );
+
+    this.eq(v.run([]), []);
+    this.eq(v.run([0]), [0]);
+    this.eq(v.run(['0']), [0]);
+    this.eq(v.run([1]), [1]);
+    this.eq(v.run(['1']), [1]);
+    this.eq(v.run([0, 1]), [0, 1]);
+    this.eq(v.run([0, '1']), [0, 1]);
+    this.eq(v.run(['0', 1]), [0, 1]);
+    this.eq(v.run(['0', '1']), [0, 1]);
+
+    await this.throws(
+      () => v.run(null),
+      async function (err) {
+        this.eq(err.property, 'input');
+        this.eq(err.actual, null);
+        this.eq(err.expected, 'an array');
+      }
+    );
+    await this.throws(
+      () => v.run('lol'),
+      async function (err) {
+        this.eq(err.property, 'input');
+        this.eq(err.actual, 'lol');
+        this.eq(err.expected, 'an array');
+      }
+    );
+    await this.throws(
+      () => v.run([null]),
+      async function (err) {
+        this.eq(err.property, 'input[0]');
+        this.eq(err.actual, null);
+        this.eq(err.expected, 'either a number or a string');
+      }
+    );
+    await this.throws(
+      () => v.run([3]),
+      async function (err) {
+        this.eq(err.property, 'input[0]');
+        this.eq(err.actual, 3);
+        this.eq(err.expected, 'either (a number in [0, 1, 2]) or a string');
+      }
+    );
+    await this.throws(
+      () => v.run(['3']),
+      async function (err) {
+        this.eq(err.property, 'input[0]');
+        this.eq(err.actual, '3');
+        this.eq(
+          err.expected,
+          'either\n    a number\n    a string\n        matching /^\\d+$/\n' +
+            "        map '3' -> 3\n        a number\n        in [0, 1, 2]"
         );
       }
     );
