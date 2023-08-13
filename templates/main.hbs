@@ -77,7 +77,7 @@ The `map` method allow one to perform transformations on the value being validat
 For example:
 
 ```js
-const is.string().match(/^\d+$/).map(x => parseInt(x, 10));
+const v = is.string().match(/^\d+$/).map(x => parseInt(x, 10));
 // v.run(1);     // throws
 // v.run('lol'); // throws
 v.run('123');    // ok => returns 123 (as a number)

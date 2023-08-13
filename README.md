@@ -77,7 +77,7 @@ The `map` method allow one to perform transformations on the value being validat
 For example:
 
 ```js
-const is.string().match(/^\d+$/).map(x => parseInt(x, 10));
+const v = is.string().match(/^\d+$/).map(x => parseInt(x, 10));
 // v.run(1);     // throws
 // v.run('lol'); // throws
 v.run('123');    // ok => returns 123 (as a number)
@@ -322,6 +322,7 @@ baseUrl parameter.
         * [.{satisfy,satisfies,satisfying}(predicate)](#Monadidator.{satisfy,satisfies,satisfying}) ⇒ [`Monadidator`](#Monadidator)
         * [.label(msg)](#Monadidator.label) ⇒ [`Monadidator`](#Monadidator)
         * [.{run,validate}(input, [name])](#Monadidator.{run,validate}) ⇒ \*
+        * [.{asyncRun,asyncValidate}(input, [name])](#Monadidator.{asyncRun,asyncValidate}) ⇒ Promise.&lt;\*&gt;
     * _static_
         * [.mkType(Cls, options)](#Monadidator.mkType) ⇒ function
 
@@ -467,6 +468,17 @@ const v = is.string().match(/^\d+$/).map(x => parseInt(x, 10));
 // v.run('lol'); // => throws, expects a string matching /^\d+$/
 v.run('123');    // => ok, returns 123 (number)
 ```
+<a name="Monadidator.{asyncRun,asyncValidate}"></a>
+
+### Monadidator.{asyncRun,asyncValidate}(input, [name]) ⇒ Promise.&lt;\*&gt;
+
+Async version of `run` that automatically awaits any asynchronous
+transformations, ie. uses of the `map` method that return promises.
+
+
+- `input` (\*)
+- `[name]` (String) <code> = &#x27;input&#x27;</code>
+
 <a name="Monadidator.mkType"></a>
 
 ### Monadidator.mkType(Cls, options) ⇒ function

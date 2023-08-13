@@ -42,41 +42,245 @@ test('Monadidator.of', async function () {
 });
 
 test('Monadidator.map', async function () {
-  await this.throws(() => is.string().map('lol'), /f must be a function/);
+  test('invalid', async function () {
+    await this.throws(() => is.string().map('lol'), /f must be a function/);
+  });
 
-  const v = is
-    .string()
-    .map((x) => Number.parseInt(x, 10))
-    .then(is.number().finite());
+  test('sync', async function () {
+    const v = is
+      .string()
+      .map((x) => Number.parseInt(x, 10))
+      .then(is.number().finite());
 
-  this.eq(v.run('-1'), -1);
-  this.eq(v.run('0'), 0);
-  this.eq(v.run('1'), 1);
+    this.eq(v.run('-1'), -1);
+    this.eq(v.run('0'), 0);
+    this.eq(v.run('1'), 1);
 
-  await this.throws(
-    () => v.run(null),
-    async function (err) {
-      this.eq(err.property, 'input');
-      this.eq(err.actual, null);
-      this.eq(err.expected, 'a string');
-    }
-  );
-  await this.throws(
-    () => v.run(0),
-    async function (err) {
-      this.eq(err.property, 'input');
-      this.eq(err.actual, 0);
-      this.eq(err.expected, 'a string');
-    }
-  );
-  await this.throws(
-    () => v.run('lol'),
-    async function (err) {
-      this.eq(err.property, 'input');
-      this.eq(err.actual, NaN);
-      this.eq(err.expected, "a string, map 'lol' -> NaN, a number and finite");
-    }
-  );
+    await this.throws(
+      () => v.run(null),
+      async function (err) {
+        this.eq(err.property, 'input');
+        this.eq(err.actual, null);
+        this.eq(err.expected, 'a string');
+      }
+    );
+    await this.throws(
+      () => v.run(0),
+      async function (err) {
+        this.eq(err.property, 'input');
+        this.eq(err.actual, 0);
+        this.eq(err.expected, 'a string');
+      }
+    );
+    await this.throws(
+      () => v.run('lol'),
+      async function (err) {
+        this.eq(err.property, 'input');
+        this.eq(err.actual, NaN);
+        this.eq(
+          err.expected,
+          "a string, map 'lol' -> NaN, a number and finite"
+        );
+      }
+    );
+  });
+
+  test('async', async function () {
+    const v = is.string().map(async (x) => Number.parseInt(x, 10));
+
+    this.eq(v.run('-1'), Promise.resolve(-1));
+    this.eq(await v.run('-1'), -1);
+
+    this.eq(await v.asyncRun('-1'), -1);
+    this.eq(await v.asyncRun('0'), 0);
+    this.eq(await v.asyncRun('1'), 1);
+
+    await this.throws(
+      () => v.asyncRun(null),
+      async function (err) {
+        this.eq(err.property, 'input');
+        this.eq(err.actual, null);
+        this.eq(err.expected, 'a string');
+      }
+    );
+    await this.throws(
+      () => v.asyncRun(0),
+      async function (err) {
+        this.eq(err.property, 'input');
+        this.eq(err.actual, 0);
+        this.eq(err.expected, 'a string');
+      }
+    );
+  });
+
+  test('chained async', async function () {
+    const v = is
+      .string()
+      .map(async (x) => Number.parseInt(x, 10))
+      .then(is.number().finite());
+
+    await this.throws(
+      () => v.run('-1'),
+      async function (err) {
+        this.eq(err.property, 'input');
+        this.eq(err.actual, Promise.resolve(-1));
+        this.eq(err.expected, "a string, map '-1' -> Promise {} and a number");
+      }
+    );
+
+    this.eq(await v.asyncRun('-1'), -1);
+    this.eq(await v.asyncRun('0'), 0);
+    this.eq(await v.asyncRun('1'), 1);
+
+    await this.throws(
+      () => v.asyncRun(null),
+      async function (err) {
+        this.eq(err.property, 'input');
+        this.eq(err.actual, null);
+        this.eq(err.expected, 'a string');
+      }
+    );
+    await this.throws(
+      () => v.asyncRun(0),
+      async function (err) {
+        this.eq(err.property, 'input');
+        this.eq(err.actual, 0);
+        this.eq(err.expected, 'a string');
+      }
+    );
+    await this.throws(
+      () => v.asyncRun('lol'),
+      async function (err) {
+        this.eq(err.property, 'input');
+        this.eq(err.actual, NaN);
+        this.eq(
+          err.expected,
+          "a string, map 'lol' -> NaN, a number and finite"
+        );
+      }
+    );
+  });
+
+  test('nested async 1', async function () {
+    const v = is.object({
+      x: is.string().map(async (x) => Number.parseInt(x, 10)),
+      y: is.string().map(async (x) => Number.parseInt(x, 10)),
+    });
+
+    this.eq(v.run({x: '1', y: '2'}), {
+      x: Promise.resolve(1),
+      y: Promise.resolve(2),
+    });
+    this.eq(await v.run({x: '1', y: '2'}), {
+      x: Promise.resolve(1),
+      y: Promise.resolve(2),
+    });
+    this.eq(await v.asyncRun({x: '1', y: '2'}), {x: 1, y: 2});
+
+    await this.throws(
+      () => v.asyncRun(null),
+      async function (err) {
+        this.eq(err.property, 'input');
+        this.eq(err.actual, null);
+        this.eq(err.expected, 'an object');
+      }
+    );
+    await this.throws(
+      () => v.asyncRun({}),
+      async function (err) {
+        this.eq(err.property, 'input.x');
+        this.eq(err.actual, undefined);
+        this.eq(err.expected, 'a string');
+      }
+    );
+    await this.throws(
+      () => v.asyncRun({x: '1', y: true}),
+      async function (err) {
+        this.eq(err.property, 'input.y');
+        this.eq(err.actual, true);
+        this.eq(err.expected, 'a string');
+      }
+    );
+  });
+
+  test('nested async 2', async function () {
+    const v = is
+      .array()
+      .where.every.elem(is.string().map(async (x) => Number.parseInt(x, 10)));
+
+    this.eq(v.run([]), []);
+    this.eq(v.run(['1']), [Promise.resolve(1)]);
+    this.eq(v.run(['1', '2']), [Promise.resolve(1), Promise.resolve(2)]);
+    this.eq(await v.run(['1', '2']), [Promise.resolve(1), Promise.resolve(2)]);
+    this.eq(await v.asyncRun(['1', '2']), [1, 2]);
+
+    await this.throws(
+      () => v.asyncRun('lol'),
+      async function (err) {
+        this.eq(err.property, 'input');
+        this.eq(err.actual, 'lol');
+        this.eq(err.expected, 'an array');
+      }
+    );
+    await this.throws(
+      () => v.asyncRun(['1', true]),
+      async function (err) {
+        this.eq(err.property, 'input[1]');
+        this.eq(err.actual, true);
+        this.eq(err.expected, 'a string');
+      }
+    );
+  });
+
+  test('nested & chained async', async function () {
+    const inner = is
+      .string()
+      .map(async (x) => {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        return Number.parseInt(x, 10);
+      })
+      .then(is.number().finite());
+
+    const v = is.object({x: inner, y: inner});
+
+    this.eq(await v.asyncRun({x: '1', y: '2'}), {x: 1, y: 2});
+
+    await this.throws(
+      () => v.asyncRun(null),
+      async function (err) {
+        this.eq(err.property, 'input');
+        this.eq(err.actual, null);
+        this.eq(err.expected, 'an object');
+      }
+    );
+    await this.throws(
+      () => v.asyncRun({}),
+      async function (err) {
+        this.eq(err.property, 'input.x');
+        this.eq(err.actual, undefined);
+        this.eq(err.expected, 'a string');
+      }
+    );
+    await this.throws(
+      () => v.asyncRun({x: '1', y: 'lol'}),
+      async function (err) {
+        this.eq(err.property, 'input.y');
+        this.eq(err.actual, 'lol');
+        this.eq(
+          err.expected,
+          "a string, map 'lol' -> NaN, a number and finite"
+        );
+      }
+    );
+    await this.throws(
+      () => v.run({x: '1', y: '2'}),
+      async function (err) {
+        this.eq(err.property, 'input.x');
+        this.eq(err.actual, '1');
+        this.eq(err.expected, "a string, map '1' -> Promise {} and a number");
+      }
+    );
+  });
 });
 
 test('Monadidator.chain', async function () {
