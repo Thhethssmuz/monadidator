@@ -758,6 +758,98 @@ test('Monadidator.where', async function () {
       }
     );
   });
+
+  test('with map sequence', async function () {
+    const v = is
+      .string()
+      .map((x) => x.trim())
+      .where('length', is.number().gt(0));
+
+    this.eq(v.run('lol'), 'lol');
+    this.eq(v.run('  lol  '), 'lol');
+
+    await this.throws(
+      () => v.run(null),
+      async function (err) {
+        this.eq(err.property, 'input');
+        this.eq(err.actual, null);
+        this.eq(err.expected, 'a string');
+      }
+    );
+    await this.throws(
+      () => v.run(''),
+      async function (err) {
+        this.eq(err.property, 'input.length');
+        this.eq(err.actual, 0);
+        this.eq(err.expected, 'a number greater than 0');
+      }
+    );
+    await this.throws(
+      () => v.run(' '),
+      async function (err) {
+        this.eq(err.property, 'input.length');
+        this.eq(err.actual, 0);
+        this.eq(err.expected, 'a number greater than 0');
+      }
+    );
+  });
+
+  test('with map sequence 2', async function () {
+    const v = is
+      .object()
+      .map((obj) => ({...obj, a: 1}))
+      .where(
+        'b',
+        is
+          .number()
+          .eq(1)
+          .map((x) => x + 1)
+      )
+      .where(
+        'c',
+        is
+          .number()
+          .eq(1)
+          .map((x) => x + 2)
+      );
+
+    this.eq(v.run({a: 99, b: 1, c: 1}), {a: 1, b: 2, c: 3});
+    this.eq(v.run({b: 1, c: 1}), {a: 1, b: 2, c: 3});
+    this.eq(v.run({b: 1, c: 1, d: 1}), {a: 1, b: 2, c: 3, d: 1});
+
+    await this.throws(
+      () => v.run(null),
+      async function (err) {
+        this.eq(err.property, 'input');
+        this.eq(err.actual, null);
+        this.eq(err.expected, 'an object');
+      }
+    );
+    await this.throws(
+      () => v.run({}),
+      async function (err) {
+        this.eq(err.property, 'input.b');
+        this.eq(err.actual, undefined);
+        this.eq(err.expected, 'a number');
+      }
+    );
+    await this.throws(
+      () => v.run({b: 0}),
+      async function (err) {
+        this.eq(err.property, 'input.b');
+        this.eq(err.actual, 0);
+        this.eq(err.expected, 'a number equal to 1');
+      }
+    );
+    await this.throws(
+      () => v.run({b: 1, c: 'lol'}),
+      async function (err) {
+        this.eq(err.property, 'input.c');
+        this.eq(err.actual, 'lol');
+        this.eq(err.expected, 'a number');
+      }
+    );
+  });
 });
 
 test('Monadidator.satisfy', async function () {

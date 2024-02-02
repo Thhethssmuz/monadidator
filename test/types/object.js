@@ -297,6 +297,55 @@ test('object', async function () {
       }
     );
   });
+
+  test('template with map 3', async function () {
+    const inner = is
+      .string()
+      .match(/^\d+$/)
+      .map((x) => Number.parseInt(x, 10));
+
+    const v = is.object({
+      x: inner,
+      y: inner,
+      z: inner,
+    });
+
+    this.eq(v.run({x: '0', y: '1', z: '2'}), {x: 0, y: 1, z: 2});
+    this.eq(v.run({x: '0', y: '1', z: '2', w: 'lol'}), {x: 0, y: 1, z: 2});
+
+    await this.throws(
+      () => v.run(null),
+      async function (err) {
+        this.eq(err.property, 'input');
+        this.eq(err.actual, null);
+        this.eq(err.expected, 'an object');
+      }
+    );
+    await this.throws(
+      () => v.run({}),
+      async function (err) {
+        this.eq(err.property, 'input.x');
+        this.eq(err.actual, undefined);
+        this.eq(err.expected, 'a string');
+      }
+    );
+    await this.throws(
+      () => v.run({x: 'lol'}),
+      async function (err) {
+        this.eq(err.property, 'input.x');
+        this.eq(err.actual, 'lol');
+        this.eq(err.expected, 'a string matching /^\\d+$/');
+      }
+    );
+    await this.throws(
+      () => v.run({x: '0'}),
+      async function (err) {
+        this.eq(err.property, 'input.y');
+        this.eq(err.actual, undefined);
+        this.eq(err.expected, 'a string');
+      }
+    );
+  });
 });
 
 test('object.instanceof', async function () {
