@@ -27,7 +27,10 @@ test('show', async function () {
   this.eq(show({a: 1}), '{a: 1}');
   this.eq(show(Object.create(null)), '[Object: null prototype] {}');
   this.eq(show(new (class X {})()), 'X {}');
-  this.eq(show(new Error('lol')), 'Error {...}');
+  this.eq(
+    show(new Error('lol')),
+    "Error {stack: [Getter/Setter], message: 'lol'}"
+  );
   this.eq(
     show(() => {}),
     '[Function (anonymous)]'
