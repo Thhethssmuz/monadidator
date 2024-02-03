@@ -14,7 +14,7 @@
     "docs": "jsdoc2md --partial templates/partials/*.hbs -t templates/main.hbs -d 2 -p list -r list -f lib/index.js lib/types/*.js > README.md",
     "test": "awfltst --summary --filename test/*.js test/types/*.js",
     "lint": "eslint lib/ test/",
-    "format": "prettier --no-bracket-spacing --single-quote -w lib/ test/"
+    "format": "prettier --no-bracket-spacing --single-quote --trailing-comma=es5 -w lib/ test/"
   },
   "devDependencies": {
     "awfltst": "^0.6.0",
