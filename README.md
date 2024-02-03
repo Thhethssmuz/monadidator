@@ -321,8 +321,8 @@ baseUrl parameter.
         * [.where(property, validator)](#Monadidator.where) ⇒ [`Monadidator`](#Monadidator)
         * [.{satisfy,satisfies,satisfying}(predicate)](#Monadidator.{satisfy,satisfies,satisfying}) ⇒ [`Monadidator`](#Monadidator)
         * [.label(msg)](#Monadidator.label) ⇒ [`Monadidator`](#Monadidator)
-        * [.{run,validate}(input, [name])](#Monadidator.{run,validate}) ⇒ \*
-        * [.{asyncRun,asyncValidate}(input, [name])](#Monadidator.{asyncRun,asyncValidate}) ⇒ Promise.&lt;\*&gt;
+        * [.{run,validate}(input, [name], [options])](#Monadidator.{run,validate}) ⇒ \*
+        * [.{asyncRun,asyncValidate}(input, [name], [options])](#Monadidator.{asyncRun,asyncValidate}) ⇒ Promise.&lt;\*&gt;
     * _static_
         * [.mkType(Cls, options)](#Monadidator.mkType) ⇒ function
 
@@ -446,11 +446,11 @@ validator, but if `this` validator fails it replaces the expected error
 message with the expected error `msg`.
 
 
-- `msg` (String)
+- `msg` (string)
 
 <a name="Monadidator.{run,validate}"></a>
 
-### Monadidator.{run,validate}(input, [name]) ⇒ \*
+### Monadidator.{run,validate}(input, [name], [options]) ⇒ \*
 
 Execute a validator, i.e. run the validator against the given `input`.
 Returns a transformed version of the input, if the validator contains any
@@ -459,7 +459,10 @@ validator is successful and throws an error otherwise.
 
 
 - `input` (\*)
-- `[name]` (String) <code> = &#x27;input&#x27;</code>
+- `[name]` (string) <code> = &quot;&#x27;input&#x27;&quot;</code>
+- `[options]` (Object)
+    - `[.format]` (string) <code> = &quot;&#x27;text&#x27;&quot;</code>
+    - `[.ErrorClass]` (function) <code> = TypeError</code>
 
 **Example**  
 ```js
@@ -470,14 +473,17 @@ v.run('123');    // => ok, returns 123 (number)
 ```
 <a name="Monadidator.{asyncRun,asyncValidate}"></a>
 
-### Monadidator.{asyncRun,asyncValidate}(input, [name]) ⇒ Promise.&lt;\*&gt;
+### Monadidator.{asyncRun,asyncValidate}(input, [name], [options]) ⇒ Promise.&lt;\*&gt;
 
 Async version of `run` that automatically awaits any asynchronous
 transformations, ie. uses of the `map` method that return promises.
 
 
 - `input` (\*)
-- `[name]` (String) <code> = &#x27;input&#x27;</code>
+- `[name]` (string) <code> = &quot;&#x27;input&#x27;&quot;</code>
+- `[options]` (Object)
+    - `[.format]` (string) <code> = &quot;&#x27;text&#x27;&quot;</code>
+    - `[.ErrorClass]` (function) <code> = TypeError</code>
 
 <a name="Monadidator.mkType"></a>
 
@@ -494,7 +500,7 @@ applicable.
 
 - `Cls` (function) - The class you want to turn into a type validator.
 - `options` (Object) - Options object.
-    - `.name` (String) - The name of the type to be used in the error output.
+    - `.name` (string) - The name of the type to be used in the error output.
     - `.predicate` (function) - A predicate function that determines if the given value is of this type.
     - `[.clone]` (function) - A function that determines how to clone a value of the given type. This is
 required for the `where` method to function correctly.
