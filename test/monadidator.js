@@ -993,3 +993,78 @@ test('Monadidator.mkType', async function () {
   this.has(X, EMPTY);
   this.has(X, CLONE);
 });
+
+test('Monadidator.run', async function () {
+  class MyError extends TypeError {}
+
+  const v = is
+    .string()
+    .map((x) => x.trim())
+    .where('length', is.number().gt(0))
+    .match(/^\d+$/);
+
+  await this.throws(
+    () => v.run(' 1a '),
+    async function (err) {
+      this.instance(err, TypeError);
+      this.eq(err.property, 'input');
+      this.eq(err.actual, '1a');
+      this.eq(
+        err.expected,
+        "a string, map ' 1a ' -> '1a' and matching /^\\d+$/"
+      );
+    }
+  );
+  await this.throws(
+    () => v.run(' 1a ', 'test'),
+    async function (err) {
+      this.instance(err, TypeError);
+      this.eq(err.property, 'test');
+      this.eq(err.actual, '1a');
+      this.eq(
+        err.expected,
+        "a string, map ' 1a ' -> '1a' and matching /^\\d+$/"
+      );
+    }
+  );
+  await this.throws(
+    () => v.run(' 1a ', 'test', {}),
+    async function (err) {
+      this.instance(err, TypeError);
+      this.eq(err.property, 'test');
+      this.eq(err.actual, '1a');
+      this.eq(
+        err.expected,
+        "a string, map ' 1a ' -> '1a' and matching /^\\d+$/"
+      );
+    }
+  );
+  await this.throws(
+    () => v.run(' 1a ', 'test', {ErrorClass: MyError}),
+    async function (err) {
+      this.instance(err, MyError);
+      this.eq(err.property, 'test');
+      this.eq(err.actual, '1a');
+      this.eq(
+        err.expected,
+        "a string, map ' 1a ' -> '1a' and matching /^\\d+$/"
+      );
+    }
+  );
+  await this.throws(
+    () => v.run(' 1a ', 'test', {format: 'tree'}),
+    async function (err) {
+      this.instance(err, TypeError);
+      this.eq(err.property, 'test');
+      this.eq(err.actual, '1a');
+      this.eq(
+        err.expected,
+        [
+          '✔ a string',
+          "├─ ✔ map ' 1a ' -> '1a'",
+          '└─ ✘ matching /^\\d+$/',
+        ].join('\n')
+      );
+    }
+  );
+});
