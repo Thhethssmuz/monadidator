@@ -1006,65 +1006,71 @@ test('Monadidator.run', async function () {
   await this.throws(
     () => v.run(' 1a '),
     async function (err) {
+      const trace = "a string, map ' 1a ' -> '1a' and matching /^\\d+$/";
       this.instance(err, TypeError);
+      this.eq(err.message, `invalid input, expected input to be ${trace}`);
       this.eq(err.property, 'input');
       this.eq(err.actual, '1a');
-      this.eq(
-        err.expected,
-        "a string, map ' 1a ' -> '1a' and matching /^\\d+$/"
-      );
+      this.eq(err.expected, trace);
     }
   );
   await this.throws(
     () => v.run(' 1a ', 'test'),
     async function (err) {
+      const trace = "a string, map ' 1a ' -> '1a' and matching /^\\d+$/";
       this.instance(err, TypeError);
+      this.eq(err.message, `invalid test, expected test to be ${trace}`);
       this.eq(err.property, 'test');
       this.eq(err.actual, '1a');
-      this.eq(
-        err.expected,
-        "a string, map ' 1a ' -> '1a' and matching /^\\d+$/"
-      );
+      this.eq(err.expected, trace);
     }
   );
   await this.throws(
     () => v.run(' 1a ', 'test', {}),
     async function (err) {
+      const trace = "a string, map ' 1a ' -> '1a' and matching /^\\d+$/";
       this.instance(err, TypeError);
+      this.eq(err.message, `invalid test, expected test to be ${trace}`);
       this.eq(err.property, 'test');
       this.eq(err.actual, '1a');
-      this.eq(
-        err.expected,
-        "a string, map ' 1a ' -> '1a' and matching /^\\d+$/"
-      );
+      this.eq(err.expected, trace);
     }
   );
   await this.throws(
     () => v.run(' 1a ', 'test', {ErrorClass: MyError}),
     async function (err) {
+      const trace = "a string, map ' 1a ' -> '1a' and matching /^\\d+$/";
       this.instance(err, MyError);
+      this.eq(err.message, `invalid test, expected test to be ${trace}`);
       this.eq(err.property, 'test');
       this.eq(err.actual, '1a');
-      this.eq(
-        err.expected,
-        "a string, map ' 1a ' -> '1a' and matching /^\\d+$/"
-      );
+      this.eq(err.expected, trace);
+    }
+  );
+  await this.throws(
+    () => v.run(null, 'test', {format: 'tree'}),
+    async function (err) {
+      const trace = '✘ a string';
+      this.instance(err, TypeError);
+      this.eq(err.message, `invalid test, expected test to be:\n${trace}\n`);
+      this.eq(err.property, 'test');
+      this.eq(err.actual, null);
+      this.eq(err.expected, trace);
     }
   );
   await this.throws(
     () => v.run(' 1a ', 'test', {format: 'tree'}),
     async function (err) {
+      const trace = [
+        '✔ a string',
+        "├─ ✔ map ' 1a ' -> '1a'",
+        '└─ ✘ matching /^\\d+$/',
+      ].join('\n');
       this.instance(err, TypeError);
+      this.eq(err.message, `invalid test, expected test to be:\n${trace}\n`);
       this.eq(err.property, 'test');
       this.eq(err.actual, '1a');
-      this.eq(
-        err.expected,
-        [
-          '✔ a string',
-          "├─ ✔ map ' 1a ' -> '1a'",
-          '└─ ✘ matching /^\\d+$/',
-        ].join('\n')
-      );
+      this.eq(err.expected, trace);
     }
   );
 });
